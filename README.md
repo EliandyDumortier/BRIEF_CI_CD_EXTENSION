@@ -157,3 +157,20 @@ At the end of this project we achieved:
 ✔️ CI/CD best practices
 ✔️ Automated versioning via Semantic Release
 ✔️ Docker image builds + registry publishing
+
+---
+# 🔧 CI/CD Monitoring & Quality
+
+![CI](https://github.com/EliandyDumortier/BRIEF_CI_CD_EXTENSION/actions/workflows/ci.yml/badge.svg)
+![Docker Build](https://github.com/EliandyDumortier/BRIEF_CI_CD_EXTENSION/actions/workflows/build.yml/badge.svg)
+
+## 📊 Quality & Monitoring
+
+This project uses GitHub Actions to continuously monitor:
+
+- Code quality (Ruff, Mypy)
+- Security (Bandit, Safety, Detect-Secrets)
+- Test execution & coverage
+- Docker image build & publication
+
+All checks run automatically on each pull request and push.
