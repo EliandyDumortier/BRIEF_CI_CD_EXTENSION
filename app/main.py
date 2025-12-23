@@ -3,6 +3,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from prometheus_fastapi_instrumentator import Instrumentator
 from sqlmodel import SQLModel
 
 from app.database import engine
@@ -15,8 +16,8 @@ API_KEY = os.getenv("API_KEY", "placeholder-api-key")
 
 
 @asynccontextmanager
-async def lifespan(fastapi_app: FastAPI) -> AsyncIterator[None]:
-    """Contexte de vie de l'application (création des tables au démarrage)."""
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    """Application lifespan: create DB tables at startup."""
     SQLModel.metadata.create_all(engine)
     yield
 
@@ -28,6 +29,10 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# 🔥 Prometheus instrumentation
+Instrumentator().instrument(app).expose(app)
+
+# Routes
 app.include_router(items_router)
 
 
@@ -39,9 +44,3 @@ def root() -> dict[str, str]:
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "healthy"}
-
-
-very_long_variable_name_that_exceeds_line_length = (
-    "Cette ligne est intentionnellement trop longue pour violer "
-    "les règles de formatage standard"
-)
