@@ -1,0 +1,13 @@
+name: Sync main into develop
+
+on:
+  workflow_dispatch:  # tu le déclencheras à la main si besoin
+
+jobs:
+  sync-info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Explain sync strategy
+        run: |
+          echo "Ce workflow rappelle qu'après chaque release sur main,"
+          echo "il faut merger main -> develop pour garder les branches synchronisées."

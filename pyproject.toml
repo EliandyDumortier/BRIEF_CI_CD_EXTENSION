@@ -1,0 +1,79 @@
+[project]
+name = "training-ci-cd-semantic-release"
+version = "0.1.0"
+description = "CRUD API with PostgreSQL for managing items"
+requires-python = ">=3.13"
+
+# ============================================================================
+# DEPENDENCIES
+# ============================================================================
+dependencies = [
+    "fastapi[standard]>=0.121.0",
+    "psycopg2-binary>=2.9.11",
+    "python-semantic-release>=10.5.2",
+    "sqlmodel>=0.0.27",
+]
+
+[dependency-groups]
+dev = [
+    "diagrams>=0.24.4",
+    "mypy>=1.18.2",
+    "pytest>=9.0.1",
+    "pytest-cov>=5.0.0",
+    "ruff>=0.14.6",
+    "bandit>=1.7.10",
+    "safety>=3.2.0",
+    "detect-secrets==1.4.0",
+    "semantic-release>=0.1.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "--strict-markers --cov=app --cov-report=term-missing"
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = ["B008"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["sqlalchemy.ext.mypy.plugin"]
+
+
+[tool.semantic_release]
+version_source = "commit"
+major_on_zero = false
+tag_format = "v{version}"
+
+[tool.semantic_release.branches]
+main = true
+develop = false
+
+[tool.semantic_release.commit_parser]
+version = "angular"
+
+[tool.semantic_release.publish]
+# ici on ne publie que sur GitHub (pas de PyPI)
+github = true

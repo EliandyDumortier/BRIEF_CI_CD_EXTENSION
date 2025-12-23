@@ -1,0 +1,46 @@
+name: Release (semantic-release)
+
+on:
+  workflow_run:
+    workflows: ["CI"]     # on ne release que si la CI passe
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:       # pour déclencher manuellement si besoin
+
+jobs:
+  release:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write       # créer des tags + changelog
+      packages: write       # si un jour tu publies des artefacts
+      issues: write         # pour ouvrir/mettre à jour des issues
+      pull-requests: write  # pour commenter les PR
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # important pour que semantic-release voie les tags
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run semantic-release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: uv run semantic-release publish
