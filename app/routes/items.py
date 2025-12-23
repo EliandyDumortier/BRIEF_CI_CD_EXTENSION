@@ -5,6 +5,10 @@ from app.database import get_db
 from app.models.item import Item
 from app.schemas.item import ItemCreate, ItemResponse, ItemUpdate
 from app.services.item_service import ItemService
+from monitoring.metrics import (
+    ITEMS_REQUEST_COUNT,
+    ITEMS_REQUEST_LATENCY,
+)
 
 router = APIRouter(prefix="/items", tags=["items"])
 
@@ -17,9 +21,16 @@ def get_items(
     limit: int = 100,
     db: Session = Depends(get_db),
 ) -> list[Item]:
-    """Récupère la liste des items avec pagination."""
-    # On suppose que ItemService.get_all renvoie une liste de Item (modèle SQLModel)
-    return ItemService.get_all(db, skip, limit)
+    with ITEMS_REQUEST_LATENCY.labels(endpoint="get_items").time():
+        items = ItemService.get_all(db, skip, limit)
+
+    ITEMS_REQUEST_COUNT.labels(
+        method="GET",
+        endpoint="/items",
+        status="200",
+    ).inc()
+
+    return items
 
 
 @router.get("/{item_id}", response_model=ItemResponse)
@@ -27,13 +38,26 @@ def get_item(
     item_id: int,
     db: Session = Depends(get_db),
 ) -> Item:
-    """Récupère un item par son identifiant."""
-    item = ItemService.get_by_id(db, item_id)
+    with ITEMS_REQUEST_LATENCY.labels(endpoint="get_item").time():
+        item = ItemService.get_by_id(db, item_id)
+
     if not item:
+        ITEMS_REQUEST_COUNT.labels(
+            method="GET",
+            endpoint="/items/{id}",
+            status="404",
+        ).inc()
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Item with id {item_id} not found",
         )
+
+    ITEMS_REQUEST_COUNT.labels(
+        method="GET",
+        endpoint="/items/{id}",
+        status="200",
+    ).inc()
+
     return item
 
 
@@ -46,8 +70,16 @@ def create_item(
     item_data: ItemCreate,
     db: Session = Depends(get_db),
 ) -> Item:
-    """Crée un nouvel item."""
-    return ItemService.create(db, item_data)
+    with ITEMS_REQUEST_LATENCY.labels(endpoint="create_item").time():
+        item = ItemService.create(db, item_data)
+
+    ITEMS_REQUEST_COUNT.labels(
+        method="POST",
+        endpoint="/items",
+        status="201",
+    ).inc()
+
+    return item
 
 
 @router.put("/{item_id}", response_model=ItemResponse)
@@ -56,13 +88,26 @@ def update_item(
     item_data: ItemUpdate,
     db: Session = Depends(get_db),
 ) -> Item:
-    """Met à jour un item existant."""
-    item = ItemService.update(db, item_id, item_data)
+    with ITEMS_REQUEST_LATENCY.labels(endpoint="update_item").time():
+        item = ItemService.update(db, item_id, item_data)
+
     if not item:
+        ITEMS_REQUEST_COUNT.labels(
+            method="PUT",
+            endpoint="/items/{id}",
+            status="404",
+        ).inc()
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Item with id {item_id} not found",
         )
+
+    ITEMS_REQUEST_COUNT.labels(
+        method="PUT",
+        endpoint="/items/{id}",
+        status="200",
+    ).inc()
+
     return item
 
 
@@ -71,10 +116,21 @@ def delete_item(
     item_id: int,
     db: Session = Depends(get_db),
 ) -> None:
-    """Supprime un item."""
     deleted = ItemService.delete(db, item_id)
+
     if not deleted:
+        ITEMS_REQUEST_COUNT.labels(
+            method="DELETE",
+            endpoint="/items/{id}",
+            status="404",
+        ).inc()
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Item with id {item_id} not found",
         )
+
+    ITEMS_REQUEST_COUNT.labels(
+        method="DELETE",
+        endpoint="/items/{id}",
+        status="204",
+    ).inc()
