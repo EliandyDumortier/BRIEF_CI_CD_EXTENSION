@@ -1,20 +1,15 @@
-from prometheus_client import Counter
+from prometheus_client import Counter, Histogram
 
-# Counts how many times endpoints are called
-items_requests_total = Counter(
+# Count total HTTP requests on items endpoints
+ITEMS_REQUEST_COUNT = Counter(
     "items_requests_total",
-    "Total number of requests on items endpoints",
+    "Total number of requests on /items endpoints",
+    ["method", "endpoint", "status"],
+)
+
+# Measure request latency
+ITEMS_REQUEST_LATENCY = Histogram(
+    "items_request_latency_seconds",
+    "Latency of requests on /items endpoints",
     ["method", "endpoint"],
-)
-
-# Counts created items
-items_created_total = Counter(
-    "items_created_total",
-    "Total number of items created",
-)
-
-# Counts deleted items
-items_deleted_total = Counter(
-    "items_deleted_total",
-    "Total number of items deleted",
 )
